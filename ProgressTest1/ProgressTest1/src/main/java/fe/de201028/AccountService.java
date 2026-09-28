@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class AccountService {
 
@@ -92,7 +93,6 @@ public class AccountService {
         String passwordHash =
                 PasswordHasher.hash(salt, password);
 
-
         Account account = new Account(
                 username,
                 emailKey,
@@ -109,7 +109,21 @@ public class AccountService {
         return ResultCode.SUCCESS;
     }
 
-    private static boolean isBlank(String value) {
+    // ================= Tìm tài khoản =================
+
+    public Optional<Account> findByUsername(String username) {
+        if (isBlank(username)) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(
+                accountsByUsername.get(key(username))
+        );
+    }
+
+    // ================= Helper =================
+
+    static boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
 
