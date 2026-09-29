@@ -14,10 +14,10 @@ public class AccountService {
 
     private final Map<String, Account> accountsByUsername = new HashMap<>();
     private final Map<String, String> usernameByEmail = new HashMap<>();
-    private final Map<String, String> usernameByToken = new HashMap<>();
-    private final Map<String, String> tokenByUsername = new HashMap<>();
 
-    // ================= Đăng ký =================
+    // =========================================================
+    // TODO-4: REGISTER
+    // =========================================================
 
     public ResultCode register(
             String username,
@@ -66,7 +66,6 @@ public class AccountService {
         }
 
         // BR-REG-09
-        // phone null hoặc "" được chấp nhận
         if (phone != null
                 && !phone.isEmpty()
                 && !AccountValidator.isValidPhone(phone)) {
@@ -89,9 +88,7 @@ public class AccountService {
 
         // BR-REG-10
         String salt = PasswordHasher.generateSalt();
-
-        String passwordHash =
-                PasswordHasher.hash(salt, password);
+        String passwordHash = PasswordHasher.hash(salt, password);
 
         Account account = new Account(
                 username,
@@ -109,9 +106,12 @@ public class AccountService {
         return ResultCode.SUCCESS;
     }
 
-    // ================= Tìm tài khoản =================
+    // =========================================================
+    // TODO-5: FIND ACCOUNT
+    // =========================================================
 
     public Optional<Account> findByUsername(String username) {
+
         if (isBlank(username)) {
             return Optional.empty();
         }
@@ -121,7 +121,105 @@ public class AccountService {
         );
     }
 
-    // ================= Helper =================
+    // =========================================================
+    // TODO-6: LOGIN
+    // =========================================================
+
+    public ResultCode login(String username, String password) {
+
+        // BR-LOG-01
+        if (isBlank(username) || isBlank(password)) {
+            return ResultCode.INVALID_INPUT;
+        }
+
+        // BR-LOG-02, BR-LOG-03
+        Account account = accountsByUsername.get(key(username));
+
+        if (account == null) {
+            return ResultCode.INVALID_CREDENTIALS;
+        }
+
+        // BR-LOG-04
+        if (account.getStatus() == AccountStatus.DISABLED) {
+            return ResultCode.ACCOUNT_DISABLED;
+        }
+
+        // BR-LOG-06
+        // Đang bị khóa thì từ chối, không tăng failedAttempts
+        if (account.isLocked()) {
+            return ResultCode.ACCOUNT_LOCKED;
+        }
+
+        // BR-LOG-03, BR-LOG-05
+        if (!PasswordHasher.matches(
+                account.getSalt(),
+                password,
+                account.getCurrentPasswordHash())) {
+
+            account.incrementFailedAttempts();
+
+            // Sai lần thứ 5 thì khóa
+            if (account.getFailedAttempts() >= MAX_FAILED_ATTEMPTS) {
+                account.lock();
+
+                return ResultCode.ACCOUNT_LOCKED;
+            }
+
+            return ResultCode.INVALID_CREDENTIALS;
+        }
+
+        // BR-LOG-08
+        // Đăng nhập đúng -> reset số lần sai
+        account.resetFailedAttempts();
+
+        return ResultCode.SUCCESS;
+    }
+
+    // =========================================================
+    // TODO-6: ADMIN
+    // =========================================================
+
+    public ResultCode disableAccount(String username) {
+
+        Optional<Account> account = findByUsername(username);
+
+        if (account.isEmpty()) {
+            return ResultCode.USER_NOT_FOUND;
+        }
+
+        account.get().setStatus(AccountStatus.DISABLED);
+
+        return ResultCode.SUCCESS;
+    }
+
+    // BR-ADM-03
+    public ResultCode unlockAccount(String username) {
+
+        Optional<Account> account = findByUsername(username);
+
+        if (account.isEmpty()) {
+            return ResultCode.USER_NOT_FOUND;
+        }
+
+        account.get().unlock();
+
+        return ResultCode.SUCCESS;
+    }
+
+    // =========================================================
+    // CHECK LOCKED
+    // =========================================================
+
+    public boolean isLocked(String username) {
+
+        return findByUsername(username)
+                .map(Account::isLocked)
+                .orElse(false);
+    }
+
+    // =========================================================
+    // HELPER
+    // =========================================================
 
     static boolean isBlank(String value) {
         return value == null || value.isBlank();
