@@ -31,4 +31,21 @@ public class LoginPage extends BasePage {
     public String getMessageText(By locator) {
         return getText(locator);
     }
+
+    private final By flashMessage = By.id("flash");
+
+    /** Đăng nhập thành công, trả về luôn trang SecureAreaPage */
+    public SecureAreaPage loginAs(String username, String password) {
+        login(username, password);
+        return new SecureAreaPage(driver);
+    }
+
+    public String getFlashMessage() {
+        return getText(flashMessage);
+    }
+
+    /** Kiểm tra xem hiện tại có đúng đang ở trang /login hay không */
+    public boolean isAt() {
+        return driver.getCurrentUrl().endsWith("/login");
+    }
 }
