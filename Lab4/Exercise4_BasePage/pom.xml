@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edu.fpt.swt301</groupId>
-    <artifactId>SeleniumDemo</artifactId>
+    <artifactId>Exercise4_BasePage</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -55,6 +55,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
+            <!-- Sinh báo cáo HTML từ kết quả surefire (TODO 11) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
         </plugins>
